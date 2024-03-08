@@ -32,7 +32,7 @@ jobs:
         name: "Code Review"
         id: review
         with:
-          apiKey: ${{ secrets.API_KEY }}
+          apiKey: ${{ secrets.OPENAI_API_KEY }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           githubRepository: ${{ github.repository }}
           githubPullRequestNumber: ${{ github.event.pull_request.number }}
