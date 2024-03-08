@@ -33,11 +33,18 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
 
-      - name: OpenAI Completions
-        uses: Just-Moh-it/openai@v0.0.1
+      # - name: OpenAI Completions
+      #   uses: Just-Moh-it/openai@v0.0.1
+      #   with:
+      #     openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+      #     openai-mode: "completion"
+      #     openai-params: '{"prompt":"Repeat after me, Hello World: }}", "model": "text-davinci-003"}'
+      #   id: openai
+      
+      - name: AI Code Reviewer
+        uses: freeedcom/ai-codereviewer@2.7.0
         with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          openai-mode: "completion"
-          openai-params: '{"prompt":"Repeat after me, Hello World: }}", "model": "text-davinci-003"}'
-        id: openai
-            
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # The GITHUB_TOKEN is there by default so you just need to keep it like it is and not necessarily need to add it as secret as it will throw an error. [More Details](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret)
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_MODEL: "gpt-4-turbo" # Optional: defaults to "gpt-4"
+          exclude: "**/*.json" # Optional: exclude patterns separated by commas
