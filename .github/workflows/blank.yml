@@ -36,16 +36,11 @@ jobs:
           raw_diff_file_output: diff.txt
           file_output_only: "false"
 
-      # Print the diff in JSON format
-      - name: print raw diff
-        id: get_diff
-        env:
-          DIFF: ${{ steps.git-diff-action.outputs.raw-diff-path }}
-        run: echo "::set-output name=pull_request_diff::$(cat $DIFF)"
-
       - uses: koganei/llm-code-review@main
         name: "Code Review"
         id: review
+        env:
+          DIFF: ${{ steps.git-diff-action.outputs.raw-diff-path }}
         with:
           apiKey: ${{ secrets.OPENAI_API_KEY }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +52,7 @@ jobs:
           topK: "50"
           topP: "0.95"
           pullRequestDiff: |-
-            ${{ steps.get_diff.outputs.pull_request_diff }}
+            $(cat $DIFF)
           pullRequestChunkSize: "3500"
           logLevel: "DEBUG"
       
