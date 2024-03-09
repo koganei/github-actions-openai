@@ -37,6 +37,7 @@ jobs:
           git checkout "${{ env.PULL_REQUEST_HEAD_REF }}"
           git diff "origin/${{ env.PULL_REQUEST_HEAD_REF }}" > "diff.txt"
           # shellcheck disable=SC2086
+          echo "diff=$(cat "diff.txt")"
           echo "diff=$(cat "diff.txt")" >> $GITHUB_ENV
 
       - uses: koganei/llm-code-review@main
