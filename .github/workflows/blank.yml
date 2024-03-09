@@ -16,35 +16,43 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
-
-      # - name: OpenAI Completions
-      #   uses: Just-Moh-it/openai@v0.0.1
-      #   with:
-      #     openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-      #     openai-mode: "completion"
-      #     openai-params: '{"prompt":"Repeat after me, Hello World: }}", "model": "text-davinci-003"}'
-      #   id: openai
-      
-      - name: AI Code Reviewer
-        uses: freeedcom/ai-codereviewer@2.7.0
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # The GITHUB_TOKEN is there by default so you just need to keep it like it is and not necessarily need to add it as secret as it will throw an error. [More Details](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret)
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_API_MODEL: "gpt-4" # Optional: defaults to "gpt-4"
-          exclude: "**/*.json" # Optional: exclude patterns separated by commas
+          fetch-depth: 0 # needed to checkout all branches for this Action to work
+
+      # Check the PR diff using the current branch and the base branch of the PR
+      - uses: GrantBirki/git-diff-action@v2.4.1
+        id: git-diff-action
+        with:
+          json_diff_file_output: diff.json
+          raw_diff_file_output: diff.txt
+          file_output_only: "false"
+
+      - uses: koganei/llm-code-review@main
+        name: "Code Review"
+        id: review
+        env:
+          DIFF: ${{ steps.git-diff-action.outputs.raw-diff-path }}
+        with:
+          apiKey: ${{ secrets.OPENAI_API_KEY }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          githubRepository: ${{ github.repository }}
+          githubPullRequestNumber: ${{ github.event.pull_request.number }}
+          gitCommitHash: ${{ github.event.pull_request.head.sha }}
+          temperature: "0.2"
+          maxNewTokens: "250"
+          topK: "50"
+          topP: "0.95"
+          pullRequestDiff: |-
+            $(cat $DIFF)
+          pullRequestChunkSize: "3500"
+          logLevel: "DEBUG"
+      
