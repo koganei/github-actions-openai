@@ -25,21 +25,23 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # needed to checkout all branches for this Action to work
 
-      # Runs a single command using the runners shell
-      - name: "Get diff of the pull request"
+      # Check the PR diff using the current branch and the base branch of the PR
+      - uses: GrantBirki/git-diff-action@vX.X.X
+        id: git-diff-action
+        with:
+          json_diff_file_output: diff.json
+          raw_diff_file_output: diff.txt
+          file_output_only: "true"
+
+      # Print the diff in JSON format
+      - name: print raw diff
         id: get_diff
-        shell: bash
         env:
-          PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
-        run: |-
-          git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}:${{ env.PULL_REQUEST_HEAD_REF }}"
-          git checkout "${{ env.PULL_REQUEST_HEAD_REF }}"
-          git diff "origin/${{ env.PULL_REQUEST_HEAD_REF }}"
-          git diff "origin/${{ env.PULL_REQUEST_HEAD_REF }}" > "diff.txt"
-          # shellcheck disable=SC2086
-          echo "diff=$(cat "diff.txt")"
-          echo "diff=$(cat "diff.txt")" >> $GITHUB_ENV
+          DIFF: ${{ steps.git-diff-action.outputs.raw-diff-path }}
+        run: echo "::set-output name=pull_request_diff::$(cat $DIFF)"
 
       - uses: koganei/llm-code-review@main
         name: "Code Review"
